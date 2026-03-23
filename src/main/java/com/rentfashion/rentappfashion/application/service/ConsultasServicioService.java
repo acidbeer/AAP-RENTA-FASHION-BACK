@@ -8,6 +8,8 @@ import com.rentfashion.rentappfashion.application.port.out.PrendaRepositoryPort;
 import com.rentfashion.rentappfashion.application.port.out.ServicioAlquilerRepositoryPort;
 import com.rentfashion.rentappfashion.domain.exception.NotFoundException;
 import com.rentfashion.rentappfashion.domain.model.ServicioAlquiler;
+import com.rentfashion.rentappfashion.domain.model.iterator.CustomIterator;
+import com.rentfashion.rentappfashion.domain.model.iterator.PrendaCollection;
 import com.rentfashion.rentappfashion.domain.model.prenda.Prenda;
 
 import java.time.LocalDate;
@@ -49,10 +51,20 @@ public class ConsultasServicioService implements
     @Override
     public Map<String, List<Prenda>> consultarPorTallaSeparadasPorTipo(String talla) {
         List<Prenda> prendas = prendaRepo.findByTalla(talla);
-        Map<String, List<Prenda>> res = new LinkedHashMap<>();
-        for (Prenda p : prendas) {
-            res.computeIfAbsent(p.getTipo().name(), k -> new ArrayList<>()).add(p);
+
+        PrendaCollection prendaCollection = new PrendaCollection(prendas);
+        CustomIterator<Prenda> iterator = prendaCollection.createIterator();
+
+        Map<String, List<Prenda>> resultado = new LinkedHashMap<>();
+
+        while (iterator.hasNext()) {
+            Prenda prenda = iterator.next();
+            resultado
+                    .computeIfAbsent(prenda.getTipo().name(), k -> new ArrayList<>())
+                    .add(prenda);
         }
-        return res;
+
+        return resultado;
+
     }
 }

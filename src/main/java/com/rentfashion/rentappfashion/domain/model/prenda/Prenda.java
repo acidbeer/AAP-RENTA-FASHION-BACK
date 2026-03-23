@@ -6,7 +6,7 @@ import java.util.Objects;
 public abstract class Prenda {
 
     public enum Tipo { VESTIDO_DAMA, TRAJE_CABALLERO, DISFRAZ }
-    public enum Estado { DISPONIBLE, EN_LAVANDERIA }
+    public enum Estado { DISPONIBLE, EN_LAVANDERIA,ALQUILADA }
 
     private Long id;
     private String ref;

@@ -5,6 +5,8 @@ import com.rentfashion.rentappfashion.application.port.in.ConsultarServicioUseCa
 import com.rentfashion.rentappfashion.application.port.in.ConsultarServiciosPorClienteUseCase;
 import com.rentfashion.rentappfashion.application.port.in.ConsultarServiciosPorFechaUseCase;
 import com.rentfashion.rentappfashion.application.port.in.RegistrarServicioAlquilerUseCase;
+import com.rentfashion.rentappfashion.application.service.command.CommandInvoker;
+import com.rentfashion.rentappfashion.application.service.command.RegistrarServicioAlquilerCommand;
 import com.rentfashion.rentappfashion.domain.model.ServicioAlquiler;
 import com.rentfashion.rentappfashion.domain.model.prenda.Prenda;
 import org.springframework.http.ResponseEntity;
@@ -30,25 +32,38 @@ public class ServicioAlquilerController {
 
     private final ConsultarPrendasPorTallaUseCase consultarPorTalla;
 
+    // NUEVO: Invoker para Command
+    private final CommandInvoker commandInvoker;
+
     public ServicioAlquilerController(
             RegistrarServicioAlquilerUseCase registrarServicio,
             ConsultarServicioUseCase consultarServicio,
             ConsultarServiciosPorClienteUseCase consultarPorCliente,
             ConsultarServiciosPorFechaUseCase consultarPorFecha,
-            ConsultarPrendasPorTallaUseCase consultarPorTalla
+            ConsultarPrendasPorTallaUseCase consultarPorTalla,
+            CommandInvoker commandInvoker
     ) {
         this.registrarServicio = registrarServicio;
         this.consultarServicio = consultarServicio;
         this.consultarPorCliente = consultarPorCliente;
         this.consultarPorFecha = consultarPorFecha;
         this.consultarPorTalla = consultarPorTalla;
+        this.commandInvoker = commandInvoker;
     }
 
     public record RegistrarServicioRequest(String clienteId, String empleadoId, List<String> refsPrenda, LocalDate fechaAlquiler) {}
 
     @PostMapping
     public ResponseEntity<Long> registrar(@RequestBody RegistrarServicioRequest req) {
-        Long numero = registrarServicio.registrarServicio(req.clienteId(), req.empleadoId(), req.refsPrenda(), req.fechaAlquiler());
+        RegistrarServicioAlquilerCommand command = new RegistrarServicioAlquilerCommand(
+                registrarServicio,
+                req.clienteId(),
+                req.empleadoId(),
+                req.refsPrenda(),
+                req.fechaAlquiler()
+        );
+
+        Long numero = (Long) commandInvoker.ejecutar(command);
         return ResponseEntity.ok(numero);
     }
 

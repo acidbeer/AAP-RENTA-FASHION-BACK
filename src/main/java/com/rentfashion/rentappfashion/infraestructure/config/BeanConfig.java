@@ -5,12 +5,18 @@ import com.rentfashion.rentappfashion.application.port.out.EmpleadoRepositoryPor
 import com.rentfashion.rentappfashion.application.port.out.LavanderiaRepositoryPort;
 import com.rentfashion.rentappfashion.application.port.out.PrendaRepositoryPort;
 import com.rentfashion.rentappfashion.application.port.out.ServicioAlquilerRepositoryPort;
+import com.rentfashion.rentappfashion.application.service.command.CommandInvoker;
+import com.rentfashion.rentappfashion.application.service.observer.ActualizarEstadoPrendaObserver;
+import com.rentfashion.rentappfashion.application.service.observer.AlquilerEventPublisher;
 import com.rentfashion.rentappfashion.application.service.ConsultasServicioService;
 import com.rentfashion.rentappfashion.application.service.LavanderiaService;
+import com.rentfashion.rentappfashion.application.service.strategy.ProcesamientoAlquilerBasicoStrategy;
 import com.rentfashion.rentappfashion.application.service.RegistrarClienteService;
 import com.rentfashion.rentappfashion.application.service.RegistrarEmpleadoService;
 import com.rentfashion.rentappfashion.application.service.RegistrarPrendaService;
 import com.rentfashion.rentappfashion.application.service.RegistrarServicioAlquilerService;
+import com.rentfashion.rentappfashion.application.service.observer.AlquilerObserver;
+import com.rentfashion.rentappfashion.application.service.strategy.ProcesamientoAlquilerStrategy;
 import com.rentfashion.rentappfashion.domain.factory.PrendaFactory;
 import com.rentfashion.rentappfashion.infraestructure.adapter.out.persistence.jpa.ClienteRepositoryAdapter;
 import com.rentfashion.rentappfashion.infraestructure.adapter.out.persistence.jpa.EmpleadoRepositoryAdapter;
@@ -26,6 +32,8 @@ import com.rentfashion.rentappfashion.infraestructure.adapter.out.persistence.jp
 import com.rentfashion.rentappfashion.infraestructure.adapter.out.persistence.jpa.repository.ServicioAlquilerJpaRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class BeanConfig {
@@ -49,6 +57,27 @@ public class BeanConfig {
     @Bean
     public PrendaRepositoryPort prendaRepositoryPort(PrendaJpaRepository prendaRepo, EntityMapper mapper) {
         return new PrendaRepositoryAdapter(prendaRepo, mapper);
+    }
+
+    //Nuevos Bean
+    @Bean
+    public ProcesamientoAlquilerStrategy procesamientoAlquilerStrategy() {
+        return new ProcesamientoAlquilerBasicoStrategy();
+    }
+
+    @Bean
+    public AlquilerObserver actualizarEstadoPrendaObserver(PrendaRepositoryPort prendaRepo) {
+        return new ActualizarEstadoPrendaObserver(prendaRepo);
+    }
+
+    @Bean
+    public AlquilerEventPublisher alquilerEventPublisher(List<AlquilerObserver> observers) {
+        return new AlquilerEventPublisher(observers);
+    }
+
+    @Bean
+    public CommandInvoker commandInvoker() {
+        return new CommandInvoker();
     }
 
     @Bean
@@ -88,9 +117,18 @@ public class BeanConfig {
             ClienteRepositoryPort clienteRepo,
             EmpleadoRepositoryPort empleadoRepo,
             PrendaRepositoryPort prendaRepo,
-            ServicioAlquilerRepositoryPort servicioRepo
+            ServicioAlquilerRepositoryPort servicioRepo,
+            ProcesamientoAlquilerStrategy procesamientoAlquilerStrategy,
+            AlquilerEventPublisher alquilerEventPublisher
     ) {
-        return new RegistrarServicioAlquilerService(clienteRepo, empleadoRepo, prendaRepo, servicioRepo);
+        return new RegistrarServicioAlquilerService(
+                clienteRepo,
+                empleadoRepo,
+                prendaRepo,
+                servicioRepo,
+                procesamientoAlquilerStrategy,
+                alquilerEventPublisher
+        );
     }
 
     @Bean

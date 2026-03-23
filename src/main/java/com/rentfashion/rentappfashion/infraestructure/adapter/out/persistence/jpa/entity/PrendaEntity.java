@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 public class PrendaEntity {
 
     public enum Tipo { VESTIDO_DAMA, TRAJE_CABALLERO, DISFRAZ }
-    public enum Estado { DISPONIBLE, EN_LAVANDERIA }
+    public enum Estado { DISPONIBLE, EN_LAVANDERIA,ALQUILADA }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
